@@ -65,7 +65,7 @@ void Seller::modifyOrder(vector<Order> &order)
 {
     int *pos = new int[order.size() + 1], count = 0;
     memset(pos, 0, sizeof(pos));
-    for (int i = 0;i<order.size()++i)
+    for (int i = 0; i < order.size(); ++i)
     {
         if(order[i].getModify())
         {
@@ -319,30 +319,251 @@ string Seller::getPassword()
 
 Buyer::Buyer()
 {
+    name = "no";
+    adress = "no";
+    num = 0;
 }
 
-void Buyer::bookOrder(vector<Menu> &, vector<Order> &)
+void Buyer::bookOrder(vector<Menu> &myMenu, vector<Order> &order)
 {
+    int n, m = 0, i, year, month, day, hour, appNum = 0;
+    string str;
+    char ch;
+    n = myMenu.size();
+    num = myOrder.size();
+    bool can = 1;
+    if(!n)
+    {
+        cout << endl
+             << "Sorry! There is no  dish for you to choose" << endl;
+        return;
+    }
+    cout << std::right;
+    cout << endl
+         << setw(30) << "1.Continue:" << setw(20) << "2.return " << endl;
+    while(cin>>str)
+    {
+        can = 1;
+        if(str=="2")
+            break;
+        cout << "Please input the dish ID";
+        cin >> str;
+        for (i = 0; i < n;++i)
+        {
+            if(myMenu[i].getDishId()==str)
+            {
+                myOrder.push_back(Order(myMenu[i], m));
+                break;
+            }
+            if(i==n-1)
+            {
+                cout << endl
+                     << "There is no such dish !" << endl;
+                cout << endl
+                     << setw(30) << "1.Contine" << setw(20) << "2.return" << endl;
+                can = 0;
+            }
+        }
+        if(!can)continue;
+        appNum++;
+        cout << endl
+             << "Please input the count you want";
+        cin >> n;
+        myOrder[myOrder.size() - 1].setNum(m);
+        cout << endl
+             << setw(30) << "1.Continue" << setw(20) << "2.return " << endl;
+        
+    }
+    if(appNum==0)
+    {
+        cout<<endl<<"You haven't ordered anything!"<<endl;
+		return; 
+    }
+    cout<<left;
+	cout<<endl<<"Here is the dish you have ordered:"<<endl;
+	cout<<endl<<setw(20)<<"DishID"<<setw(20)<<"DishName"<<setw(20)<<"Price"<<endl;
+	for(i=0;i<myOrder.size();++i)
+    {
+        printMenu(myOrder[i]);
+    }
+    if(name == "no"||adress == "no")
+	{
+	    cout<<endl<<"Please input your name : ";
+	    cin>>name;
+	    cout<<endl<<"Please input your address : ";
+	    cin>>adress;
+	    cout<<endl<<"Please input your phone : ";
+	    cin>>phone;
+	}
+    cout<<endl<<"Please input the date you want to have you dish,"<<endl;
+	cout<<"just as 2013/5/2 14 (year/month/day hour) : "<<endl;
+	cin>>year>>ch>>month>>ch>>day>>hour;
+	bookDate.setYear(year);
+	bookDate.setMonth(month);
+	bookDate.setDay(day);
+	bookDate.setHour(hour);
+    for(int i=num;i<myOrder.size();++i){
+		myOrder[i].setCustomerName(name);
+		myOrder[i].setAdress(adress);
+		myOrder[i].setPhone(phone);
+        myOrder[i].setBookData(bookDate);
+    }
+    inout.open("order.txt",std::ios::app);
+	if(inout.fail())
+	{
+		cout<<endl<<"The system can't find the file!"<<endl;
+		return;
+	}
+	for(i=num;i<myOrder.size();++i)
+	{
+		outputOrder(myOrder[i]);
+	}
+	inout.close();
+	num = myOrder.size();
 }
 
-void Buyer::modifyOrder(vector<Order> &)
+void Buyer::modifyOrder(vector<Order> &order)
 {
+    num = myOrder.size();
+	if(num == 0)
+	{
+		cout<<endl<<"You haven't ordered any dish!"<<endl;
+		return ;
+	}
+	//输出买家自已的所有订单 
+	cout<<left;
+	cout<<endl<<"The dish you have ordered is :"<<endl;
+	cout<<endl<<setw(7)<<"DishID"<<setw(10)<<"DishName"<<setw(6)<<"price"<<setw(4)<<"num"<<setw(8)<<"Name";
+	cout<<setw(8)<<"Phone"<<setw(12)<<"Address"<<setw(15)<<"Date"<<setw(10)<<"state"<<endl;
+	for(int i=0;i<num;++i)
+	{
+		printOrder(myOrder[i]);
+	}
+	//选择1-继续或2-返回上一层 
+	cout<<std::right;
+	cout<<endl<<setw(30)<<"1.Continue"<<setw(20)<<"2.return"<<endl;
+	string str;
+	int pos = -1,n=0;
+	Order iOrder;
+	int *cancleDish = new int[num+1],*cancle = new int[order.size()];
+	memset(cancleDish,0,4*(num+1));
+	memset(cancle,0,4*(order.size()));
+	while(cin>>str)
+	{
+		if(str == "2") break;
+		//判断无效输入 
+		if(str != "1"){
+			cout<<endl<<"Invalid input!"<<endl;
+			cout<<endl<<setw(30)<<"1.Continue"<<setw(20)<<"2.return"<<endl;
+			continue;
+		}
+		cout<<endl<<"Please input the dishID : ";
+		cin>>str;
+		for(int i=0;i<num;++i)
+		{
+			if(myOrder[i].getDishId() == str)
+			{
+                //该订单是否已确认 
+				if(myOrder[i].getModify()){
+					cout<<endl<<"The order have been canceled!"<<endl;
+				    pos = i;
+				    break;
+				}
+				else{
+					cout<<endl<<"The order have been approved! You can't cancel it !"<<endl;
+					pos = -2;
+					break;
+				}
+			}
+		}
+		//查看该买家想取消的编号是否存在 
+		if(pos < 0){
+			if(pos == -1)
+			   cout<<endl<<"There is no such dish you have ordered!"<<endl;
+		}
+		else{
+			cancleDish[pos] = 1;
+			n++;
+		}
+		pos = -1;
+		cout<<std::right;
+		cout<<endl<<setw(30)<<"1.Continue"<<setw(20)<<"2.return"<<endl;
+	}
+	//将更新的订单写入文件 
+	inout.open("order.txt",std::ios::out);
+	if(inout.fail())
+	{
+		cout<<endl<<"The system can't find the file!"<<endl;
+		delete cancleDish;delete cancle;
+		return;
+	}
+	for(int i=0;i<num;++i)
+	{
+		if(cancleDish[i]){
+			for(int j=0;j<order.size();++j)
+			{
+				if(order[j] == myOrder[i])
+				{
+					cancle[j] = 1;
+					break;
+				}
+			}
+		}
+	}
+	for(int i=0;i<order.size();++i)
+	{
+		if(cancle[i]){
+			continue;
+		}
+		outputOrder(order[i]);
+	}
+	inout.close();
+	num -= n;
+	delete cancleDish;delete cancle;
 }
 
-void Buyer::inquirOrder(vector<Order> &)
+void Buyer::inquirOrder(vector<Order> &order)
 {
+     //名字是否为空 
+	if(name == "no"){
+	    cout<<endl<<"please input your name : ";
+	    cin>>name;
+	}
+	myOrder.clear();
+	for(int i=0;i<order.size();++i)
+	{
+		if(order[i].getCustomerName() == name)
+		{
+			myOrder.push_back(order[i]);
+		}
+	}
+	num = myOrder.size();
+	if(num == 0)
+	{
+		cout<<endl<<"You haven't ordered any dish!"<<endl;
+		return;
+	}
+	cout<<left;
+	cout<<endl<<"Here is the dishes you have ordered :"<<endl; 
+	cout<<endl<<setw(7)<<"DishID"<<setw(10)<<"DishName"<<setw(6)<<"price"<<setw(4)<<"num"<<setw(8)<<"Name";
+	cout<<setw(8)<<"Phone"<<setw(12)<<"Address"<<setw(15)<<"Date"<<setw(10)<<"state"<<endl;
+	for(int i=0;i<num;++i){
+		printOrder(myOrder[i]);
+	}
+	return;
 }
 
 int Buyer::getNum()
 {
-    return 0;
+    return num;
 }
 
 string Buyer::getName()
 {
-    return string();
+    return name;
 }
 
-void Buyer::setNum(int)
+void Buyer::setNum(int n)
 {
+    num = n;
 }
